@@ -1,17 +1,16 @@
-import Tenant from '#models/tenant'
-import CodeGenerator from '#services/helps'
+import TenantUser from '#models/tenant_user'
 import type { HttpContext } from '@adonisjs/core/http'
 
 
-export default class TenantsController {
+
+export default class TenantUsersController {
   /**
    * Display a list of resource
    */
-
   async index({ response }: HttpContext) {
     try {
-      const tenants = await Tenant.all()
-      return response.accepted(tenants)
+      const tenantUsers = await TenantUser.all()
+      return response.accepted(tenantUsers)
     } catch (error) {
       return response.status(500).json({ error: error.message })
     }
@@ -23,23 +22,8 @@ export default class TenantsController {
   async store({ request, response }: HttpContext) {
     try {
       const body = request.body()
-      const code: number = CodeGenerator.genCode()
-
-      if (!body.name) {
-        return response.badRequest('Name is required')
-      }
-
-      if (!body.code) {
-        body.code = code
-      }
-
-      const tenant = await Tenant.create({
-        code: parseInt(body.code, 10),
-        name: body.name,
-        description: body.description,
-        active: true,
-      })
-      return response.created(tenant)
+      const tenantUser = await TenantUser.create(body)
+      return response.created(tenantUser)
     } catch (error) {
       return response.status(500).json({ error: error.message })
     }
@@ -50,8 +34,8 @@ export default class TenantsController {
    */
   async show({ params, response }: HttpContext) {
     try {
-      const tenant = await Tenant.findOrFail(params.id)
-      return response.status(200).json(tenant)
+      const tenantUser = await TenantUser.findOrFail(params.id)
+      return response.status(200).json(tenantUser)
     } catch (error) {
       return response.status(500).json({ error: error.message })
     }
@@ -62,13 +46,11 @@ export default class TenantsController {
    */
   async update({ params, request, response }: HttpContext) {
     try {
+      const tenantUser = await TenantUser.findOrFail(params.id)
       const body = request.body()
-      const tenant = await Tenant.findOrFail(params.id)
-
-      tenant.merge(body)
-      await tenant.save()
-
-      return response.status(200).json(tenant)
+      tenantUser.merge(body)
+      await tenantUser.save()
+      return response.status(200).json(tenantUser)
     } catch (error) {
       return response.status(500).json({ error: error.message })
     }
@@ -79,11 +61,22 @@ export default class TenantsController {
    */
   async destroy({ params, response }: HttpContext) {
     try {
-      const tenant = await Tenant.findOrFail(params.id)
-      await tenant.delete()
-      return { message: 'Tenant deleted successfully' }
+      const tenantUser = await TenantUser.findOrFail(params.id)
+      tenantUser.delete()
+      return response.status(204).json({ message: 'TenantUser deleted successfully' })
     } catch (error) {
       return response.status(500).json({ error: error.message })
     }
   }
+
+  async get_by_tenant({ params, response }: HttpContext) {
+    try {
+      const tenantUsers = await TenantUser.query().where('tenant_id', params.id)
+      return response.status(200).json(tenantUsers)
+    } catch (error) {
+      return response.status(500).json({ error: error.message })
+    }
+  }
+
+
 }
